@@ -12,10 +12,12 @@
     "async": "~1.4.0",
     "jsDataSet": "git://github.com/gaelazzo/jsDataSet.git",
     "jsDataQuery": "git://github.com/gaelazzo/jsDataQuery.git",
+    "jsDbList": "git://github.com/gaelazzo/jsDbList.git",
     "jsMultiSelect":"git://github.com/gaelazzo/jsMultiSelect.git"
   },
   "devDependencies": {
     "jsSqlServerDriver":"git://github.com/gaelazzo/jsSqlServerDriver.git",
+    "jsDataAccess": "git://github.com/gaelazzo/jsDataAccess.git",
     "grunt": "~0.4.0",
     "grunt-contrib-watch": "^0.6.1",
     "grunt-contrib-yuidoc": "^0.7.0",

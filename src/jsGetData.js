@@ -1,11 +1,13 @@
+/*globals promise sqlFun Environment rollBack reject Deferred promise fail resolve done progress notify securityProvider Context*/
+
 var dsSpace = require('jsDataSet'),
   DataSet = dsSpace.DataSet,
   DataRow = dsSpace.DataRow,
-  DataTable = dsSpace.DataRow.DataTable,
+  DataTable = dsSpace.DataTable,
   dataRowState = dsSpace.dataRowState,
   OptimisticLocking = dsSpace.OptimisticLocking,
   _ = require('lodash'),
-  dq = require('jsdataquery'),
+  dq = require('jsDataQuery'),
   multiSelect = require('jsMultiSelect'),
   Deferred = require("JQDeferred");
 
@@ -32,45 +34,32 @@ GetDataSpace.prototype = {
 };
 
 /**
- * Assumes keys = key field values eventually separated by §
+ * Assumes key = object with all key necessary fields
  * @method getFilterKey
  * @private
  * @param {Context} context
  * @param {string} tableName
- * @param {string} keys
+ * @param {object} keyValues
  * @returns {*}
  */
-function getFilterKey(context, tableName, keys) {
-  var def =  Deferred();
+function getFilterKey(context, tableName, keyValues) {
+  var def = Deferred();
 
   context.dbDescriptor.table(tableName)
-    .then(function (tableDescr) {
-      var keyValue,
-        kField,
-        colDescriptor,
-        key = tableDescr.getKey(),
-        testObj = {};
-      //Gets a filter from req
-      if (key.length > 1) {
-        var i;
-        keyValue = keys.split('§');
-        for (i = 0; i < key.length; i += 1) {
-          kField = key[i];
-          colDescriptor = tableDescr.column(kField);
-          testObj[kField] = context.formatter.getObject(keyValue[i], colDescriptor.type);
-        }
-      } else {
-        kField = key[0];
-        colDescriptor = _.find(tableDescr.columns, {name: kField});
-        testObj[kField] = context.formatter.getObject(keys, colDescriptor.type);
-      }
-      def.resolve(dq.mcmp(key, testObj));
-    })
-    .fail(function (err) {
-      def.reject(err);
-    });
+      .then(function (tableDescr) {
+        var keyValue,
+            kField,
+            colDescriptor,
+            key = tableDescr.getKey(),
+            testObj = {};
+        def.resolve(dq.mcmp(key, keyValues));
+      })
+      .fail(function (err) {
+        def.reject(err);
+      });
   return def.promise();
 }
+
 /**
  * Gets a a filter
  * @method getFilterByExample
@@ -138,18 +127,18 @@ function getByFilter(ctx, ds, table, filter) {
 
 
 /**
- * Gets a single row given its key, that is a § separated merge of all key fields
+ * Gets a single row given its key, that must be contained in key
  * @method getByKey
  * @private
  * @param {Context} ctx
  * @param {DataTable} table
- * @param {string} keys
+ * @param {object} keyValues
  * @return {DataRow}  DataRow obtained with the given key
  */
-function getByKey(ctx, table, keys){
+function getByKey(ctx, table, keyValues){
   var def =  Deferred(),
     that = this;
-  getFilterKey(ctx, table.name, keys)
+  getFilterKey(ctx, table.name, keyValues)
     .then(function(sqlFilter){
       return that.getByFilter(ctx, table.dataset, table, sqlFilter);
     })
@@ -168,14 +157,14 @@ function getByKey(ctx, table, keys){
  * @param {Context} ctx
  * @param {DataSet} ds
  * @param {DataTable} table
- * @param {string} keys
+ * @param {object} keyValues
  * @returns {*}
  */
-function fillDataSetByKey(ctx, ds, table, keys){
+function fillDataSetByKey(ctx, ds, table, keyValues){
   var def =  Deferred(),
     that = this,
     result;
-  that.getByKey(ctx, table, keys)
+  that.getByKey(ctx, table, keyValues)
     .then(function(r){
       result = r;
       return that.getStartingFrom(ctx, table);

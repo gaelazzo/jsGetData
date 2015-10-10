@@ -1,296 +1,420 @@
 'use strict';
-/*globals describe, beforeEach,it,expect,jasmine,spyOn */
-var getData = require('../../../lib/controllers/metaData/getData'),
-  getContext = require('../../../lib/controllers/metaData/context').getContext,
-  MaxCacher = require('../../../lib/controllers/metaData/postData').MaxCacher,
-  dsNameSpace = require('jsDataSet'),
-  dq = require('jsdataquery'),
-  DA = require('jsDataAccess'),
-  Deferred = require("JQDeferred"),
-  Environment = require('../../../lib/controllers/dataAccess/environment'),
-  sqlServerDriver = require('jsSqlServerDriver'),
-  dataRowState = dsNameSpace.dataRowState,
-  DataSet = dsNameSpace.DataSet,
-  Select = require('jsMultiSelect').Select,
-  OptimisticLocking = DataSet.OptimisticLocking,
-  dataSetProvider = require('../../../app/scripts/providers/dataSetProvider'),
-  _ = require('lodash');
+/*globals describe,beforeEach,it,expect,jasmine,spyOn */
+var getData = require('../../src/jsGetData'),
+    getContext = require('../fakeContext').getContext,
+    dsNameSpace = require('jsDataSet'),
+    dq = require('jsDataQuery'),
+    DataSet = dsNameSpace.DataSet,
+    dataSetProvider = require('../fakeDataSetProvider'),
+    Environment = require('../fakeEnvironment'),
+    _ = require('lodash'),
+    fs = require('fs'),
+    dbList = require('jsDbList');
+
+
+/**
+ * *****************************************************************************************
+ * VERY IMPORTANT VERY IMPORTANT VERY IMPORTANT VERY IMPORTANT VERY IMPORTANT VERY IMPORTANT
+ * *****************************************************************************************
+ * It's necessary, before start running the test, to create a file templated like:
+ *  { "server": "db server address",
+ *    "dbName": "database name",  //this must be an EMPTY database
+ *    "user": "db user",
+ *    "pwd": "db password"
+ *  }
+ */
+//PUT THE  FILENAME OF YOUR FILE HERE:
+var configName = 'D:/gitrepo/jsGetData/test/db.json';
+
+var dbConfig = JSON.parse(fs.readFileSync(configName).toString());
+
+/**
+ * setup the dbList module
+ */
+dbList.init({
+    encrypt: false,
+    decrypt: false,
+    encryptedFileName: 'test/dbList.bin'
+});
+
+var good = {
+    server: dbConfig.server,
+    useTrustedConnection: false,
+    user: dbConfig.user,
+    pwd: dbConfig.pwd,
+    database: dbConfig.dbName,
+    sqlModule: 'jsSqlServerDriver'
+};
+
+
+describe('setup dataBase', function () {
+    var sqlConn;
+    beforeEach(function (done) {
+        dbList.setDbInfo('test', good);
+        sqlConn = dbList.getConnection('test');
+        sqlConn.open().
+            done(function () {
+                done();
+            });
+    });
+
+    afterEach(function () {
+        if (sqlConn) {
+            sqlConn.destroy();
+        }
+        sqlConn = null;
+    });
+
+
+    it('should run the setup script', function (done) {
+        sqlConn.run(fs.readFileSync('test/setup.sql').toString())
+            .done(function () {
+                expect(true).toBeTruthy();
+                done();
+            })
+            .fail(function (res) {
+                expect(res).toBeUndefined();
+                done();
+            });
+    }, 30000);
+
+});
 
 describe('getData', function () {
-  var ctx,
-    dsOperatore;
+    var ctx,
+        dsCustomer;
 
-  beforeEach(function (done) {
-    dsOperatore = dataSetProvider('operatore');
-    getContext('helpdesk', 'nino', 'default', '2014', new Date(2014, 1, 20, 10, 10, 10, 0))
-      .done(function (res) {
-        ctx = res;
-        done();
-      })
-      .fail(function () {
-        done();
-      })
-  });
+    beforeEach(function (done) {
+        dsCustomer = dataSetProvider('customer');
+        getContext('test', 'nino', 'default', '2014', new Date(2014, 1, 20, 10, 10, 10, 0))
+            .done(function (res) {
+                ctx = res;
+                done();
+            })
+            .fail(function () {
+                done();
+            })
+    });
 
- it('should define getFilterKey', function(){
-   expect(getData.getFilterKey).toEqual(jasmine.any(Function));
- });
+    it('should define getFilterKey', function () {
+        expect(getData.getFilterKey).toEqual(jasmine.any(Function));
+    });
 
-  it('getFilterKey should filter key fields (single key)', function (done) {
-    getData.getFilterKey(ctx, 'operatore',1)
-      .done(function(filter){
-        var arr = [{a: 1, idoperatore: 2},{a: 3, c: 5},{a: 4, idoperatore: 1},{a: 5, idoperatore: 6}],
-          res = _.filter(arr, filter);
-        expect(res).toEqual([{a: 4, idoperatore: 1}]);
-        done();
-      })
-      .fail(function(err){
-        expect(true).toBeUndefined();
-        done();
-      })
-  });
-
-
-  it('getFilterKey should filter key fields (multi key)', function (done) {
-    getData.getFilterKey(ctx, 'swprocessdetail', '3§2')
-      .done(function (filter) {
-        var arr = [
-            {a: 1, idswprocess: 1, iddetail:1},
-            {a: 3, c: 5},
-            {a: 4, idswprocess: 3, iddetail: 1},
-            {a: 5, idswprocess: 3, iddetail: 2},
-            {a: 6, idswprocess: 3, iddetail: 3}
-          ],
-          res = _.filter(arr, filter);
-        expect(res).toEqual([
-          {a: 5, idswprocess: 3, iddetail: 2}
-        ]);
-        done();
-      })
-      .fail(function (err) {
-        expect(true).toBeUndefined();
-        done();
-      })
-  });
-
-  it('fillDataSetByKey should fill a dataset (single table)', function(done){
-    getData.fillDataSetByKey(ctx, dsOperatore, dsOperatore.tables['operatore'], '48' )
-      .done(function(){
-        expect(dsOperatore.tables['operatore'].rows.length).toBe(1);
-        expect(dsOperatore.tables['operatore'].rows[0]['idoperatore']).toBe(48);
-        expect(dsOperatore.tables['operatore'].rows[0]['denominazione']).toBe('Formica Gaetano');
-        done();
-      })
-      .fail(function(err){
-        expect(err).toBeUndefined();
-        done();
-      })
-  });
-
-  it('fillDataSetByKey should fill main table (multiple table)', function (done) {
-    var dsSwProcess = dataSetProvider('swprocess');
-    getData.fillDataSetByKey(ctx, dsSwProcess, dsSwProcess.tables['swprocess'], '2700')
-      .done(function () {
-        expect(dsSwProcess.tables['swprocess'].rows.length).toBe(1);
-        expect(dsSwProcess.tables['swprocess'].rows[0]['idswprocess']).toBe(2700);
-        expect(dsSwProcess.tables['swprocess'].rows[0]['elencoregole']).toContain('GEIVA039');
-        done();
-      })
-      .fail(function (err) {
-        expect(err).toBeUndefined();
-        done();
-      })
-  });
+    it('getFilterKey should filter key fields (single key)', function (done) {
+        //customer key  is idcustomer
+        getData.getFilterKey(ctx, 'customer', {idcustomer:1, a:1,b:2,c:3})
+            .done(function (filter) {
+                var arr = [{a: 1, idcustomer: 2}, {a: 3, c: 5}, {a: 4, idcustomer: 1}, {a: 5, idcustomer: 6}],
+                    res = _.filter(arr, filter);
+                expect(res).toEqual([{a: 4, idcustomer: 1}]);
+                done();
+            })
+            .fail(function (err) {
+                expect(err).toBeUndefined();
+                expect(true).toBeUndefined();
+                done();
+            })
+    });
 
 
+    it('getFilterKey should filter key fields (multi key)', function (done) {
+        //customerphone key  is idcustomer idphone
+        getData.getFilterKey(ctx, 'customerphone', {idcustomer:3, idphone:2, c:3,a:4})
+            .done(function (filter) {
+                expect(filter.toString()).toEqual('mcmp([idcustomer,idphone],[3,2])');
+                var arr = [
+                        {a: 1, idcustomer: 1, idphone: 1},
+                        {a: 3, c: 5},
+                        {a: 4, idcustomer: 3, idphone: 1},
+                        {a: 5, idcustomer: 3, idphone: 2},
+                        {a: 6, idcustomer: 3, idphone: 3}
+                    ],
+                    res = _.filter(arr, filter);
+                expect(res).toEqual([
+                    {a: 5, idcustomer: 3, idphone: 2}
+                ]);
+                done();
+            })
+            .fail(function (err) {
+                expect(err).toBeUndefined();
+                expect(true).toBeUndefined();
+                done();
+            })
+    });
+
+    it('fillDataSetByKey should fill a dataset (single table)', function (done) {
+        getData.fillDataSetByKey(ctx, dsCustomer, dsCustomer.tables['customer'], {idcustomer:10})
+            .done(function () {
+                expect(dsCustomer.tables['customer'].rows.length).toBe(1);
+                expect(dsCustomer.tables['customer'].rows[0]['idcustomer']).toBe(10);
+                expect(dsCustomer.tables['customer'].rows[0]['name']).toBe('name10');
+                done();
+            })
+            .fail(function (err) {
+                expect(err).toBeUndefined();
+                done();
+            })
+    });
+
+    it('fillDataSetByKey should fill main table (multiple table)', function (done) {
+        var dsSell = dataSetProvider('sell','default');
+        getData.fillDataSetByKey(ctx, dsSell, dsSell.tables['sell'], {idsell:15})
+            .done(function () {
+                expect(dsSell.tables['sell'].rows.length).toBe(1);
+                expect(dsSell.tables['sell'].rows[0]['idsell']).toBe(15);
+                expect(dsSell.tables['sell'].rows[0]['place']).toBe('place_15-3');
+                done();
+            })
+            .fail(function (err) {
+                expect(err).toBeUndefined();
+                done();
+            })
+    });
 
 
-  it('fillDataSetByKey should call getStartingFrom)', function (done) {
-    var dsSwProcess = dataSetProvider('swprocess');
-    spyOn(getData,'getStartingFrom').andCallThrough();
-    getData.fillDataSetByKey(ctx, dsSwProcess, dsSwProcess.tables['swprocess'], '2700')
-      .done(function () {
-        expect(getData.getStartingFrom).toHaveBeenCalled();
-        done();
-      })
-      .fail(function (err) {
-        expect(err).toBeUndefined();
-        done();
-      })
-  });
+    it('fillDataSetByKey should call getStartingFrom)', function (done) {
+        var dsSell = dataSetProvider('sell','default');
+        spyOn(getData, 'getStartingFrom').andCallThrough();
+        getData.fillDataSetByKey(ctx, dsSell, dsSell.tables['sell'], {idsell:20})
+            .done(function () {
+                expect(getData.getStartingFrom).toHaveBeenCalled();
+                done();
+            })
+            .fail(function (err) {
+                expect(err).toBeUndefined();
+                done();
+            })
+    });
 
-  it('fillDataSetByKey should call getByKey)', function (done) {
-    var dsSwProcess = dataSetProvider('swprocess');
-    spyOn(getData, 'getByKey').andCallThrough();
-    getData.fillDataSetByKey(ctx, dsSwProcess, dsSwProcess.tables['swprocess'], '2700')
-      .done(function () {
-        expect(getData.getByKey).toHaveBeenCalled();
-        done();
-      })
-      .fail(function (err) {
-        expect(err).toBeUndefined();
-        done();
-      })
-  });
+    it('fillDataSetByKey should call getByKey)', function (done) {
+        var dsSell = dataSetProvider('sell','default');
+        spyOn(getData, 'getByKey').andCallThrough();
+        getData.fillDataSetByKey(ctx, dsSell, dsSell.tables['sell'], {idsell:20})
+            .done(function () {
+                expect(getData.getByKey).toHaveBeenCalled();
+                done();
+            })
+            .fail(function (err) {
+                expect(err).toBeUndefined();
+                done();
+            })
+    });
 
-  it('fillDataSetByKey should call getStartingFrom)', function (done) {
-    var dsSwProcess = dataSetProvider('swprocess');
-    spyOn(getData, 'getStartingFrom').andCallThrough();
-    getData.fillDataSetByKey(ctx, dsSwProcess, dsSwProcess.tables['swprocess'], '2700')
-      .done(function () {
-        expect(getData.getStartingFrom).toHaveBeenCalled();
-        done();
-      })
-      .fail(function (err) {
-        expect(err).toBeUndefined();
-        done();
-      })
-  });
+    it('fillDataSetByKey should call getStartingFrom)', function (done) {
+        var dsSell = dataSetProvider('sell','default');
+        spyOn(getData, 'getStartingFrom').andCallThrough();
+        getData.fillDataSetByKey(ctx, dsSell, dsSell.tables['sell'], {idsell:20})
+            .done(function () {
+                expect(getData.getStartingFrom).toHaveBeenCalled();
+                done();
+            })
+            .fail(function (err) {
+                expect(err).toBeUndefined();
+                done();
+            })
+    });
 
-  it('fillDataSetByKey should call getStartingFrom with given table filled)', function (done) {
-    var dsSwProcess = dataSetProvider('swprocess');
-    spyOn(getData, 'getStartingFrom').andCallThrough();
-    getData.fillDataSetByKey(ctx, dsSwProcess, dsSwProcess.tables['swprocess'], '2700')
-      .done(function () {
-        expect(getData.getStartingFrom.calls[0].args[0]).toBe(ctx);
-        expect(getData.getStartingFrom.calls[0].args[1]).toBe(dsSwProcess.tables['swprocess']);
-        done();
-      })
-      .fail(function (err) {
-        expect(err).toBeUndefined();
-        done();
-      })
-  });
+    it('fillDataSetByKey should call getStartingFrom with given table filled)', function (done) {
+        var dsSell = dataSetProvider('sell','default');
+        spyOn(getData, 'getStartingFrom').andCallThrough();
+        getData.fillDataSetByKey(ctx, dsSell, dsSell.tables['sell'], {idsell:20})
+            .done(function () {
+                expect(getData.getStartingFrom.calls[0].args[0]).toBe(ctx);
+                expect(getData.getStartingFrom.calls[0].args[1]).toBe(dsSell.tables['sell']);
+                done();
+            })
+            .fail(function (err) {
+                expect(err).toBeUndefined();
+                done();
+            })
+    });
 
-  it('fillDataSetByKey should call scanTables)', function (done) {
-    var dsSwProcess = dataSetProvider('swprocess');
-    spyOn(getData, 'scanTables').andCallThrough();
-    getData.fillDataSetByKey(ctx, dsSwProcess, dsSwProcess.tables['swprocess'], '2700')
-      .done(function () {
-        expect(getData.scanTables).toHaveBeenCalled();
-        done();
-      })
-      .fail(function (err) {
-        expect(err).toBeUndefined();
-        done();
-      })
-  });
+    it('fillDataSetByKey should call scanTables)', function (done) {
+        var dsSell = dataSetProvider('sell','default');
+        spyOn(getData, 'scanTables').andCallThrough();
+        getData.fillDataSetByKey(ctx, dsSell, dsSell.tables['sell'], {idsell:20})
+            .done(function () {
+                expect(getData.scanTables).toHaveBeenCalled();
+                done();
+            })
+            .fail(function (err) {
+                expect(err).toBeUndefined();
+                done();
+            })
+    });
 
 
-  it('fillDataSetByKey should fill child table (one child table)', function (done) {
-    var dsSwProcess = dataSetProvider('swprocess');
-    getData.fillDataSetByKey(ctx, dsSwProcess, dsSwProcess.tables['swprocess'], '2700')
-      .done(function () {
-        expect(dsSwProcess.tables['swprocessdetail'].rows.length).toBe(3);
-        if (dsSwProcess.tables['swprocessdetail'].rows.length>0) {
-          expect(dsSwProcess.tables['swprocessdetail'].rows[0]['idoperatore']).toBe(23);
-        }
-        done();
-      })
-      .fail(function (err) {
-        expect(err).toBeUndefined();
-        done();
-      })
-  });
+    it('fillDataSetByKey should fill child table (one child table)', function (done) {
+        var dsCustomerPhone = dataSetProvider('customerphone');
+        getData.fillDataSetByKey(ctx, dsCustomerPhone, dsCustomerPhone.tables['customer'],{idcustomer:23})
+            .done(function () {
+                expect(dsCustomerPhone.tables['customerphone'].rows.length).toBe(3);
+                if (dsCustomerPhone.tables['customerphone'].rows.length > 0) {
+                    expect(dsCustomerPhone.tables['customerphone'].rows[0]['idcustomer']).toBe(23);
+                }
+                done();
+            })
+            .fail(function (err) {
+                expect(err).toBeUndefined();
+                done();
+            })
+    });
 
-  it('fillDataSetByKey should fill child table (different parent tables)', function (done) {
-    var dsSwProcess = dataSetProvider('swprocess','default');
-    getData.fillDataSetByKey(ctx, dsSwProcess, dsSwProcess.tables['swprocess'], '5889')
-      .done(function () {
-        expect(dsSwProcess.tables['swprocessdetail'].rows.length).toBe(7);
-        expect(dsSwProcess.tables['operatore'].rows.length).toBe(1);
-        if (dsSwProcess.tables['operatore'].rows.length>0) {
-          expect(dsSwProcess.tables.operatore.rows[0].idoperatore).toBe(44);
-        }
-        expect(dsSwProcess.tables['telefonocliente'].rows.length).toBe(1);
-        if (dsSwProcess.tables['telefonocliente'].rows.length>0) {
-          expect(dsSwProcess.tables.telefonocliente.rows[0].idtipotelefono).toBe(2);
-        }
-        expect(dsSwProcess.tables['clienteview'].rows.length).toBe(1);
-        if (dsSwProcess.tables['clienteview'].rows.length>0) {
-          expect(dsSwProcess.tables.clienteview.rows[0].idcliente).toBe(1);
-        }
-        expect(dsSwProcess.tables['ente'].rows.length).toBe(1);
-        if (dsSwProcess.tables['ente'].rows.length>0) {
-          expect(dsSwProcess.tables.ente.rows[0].idente).toBe(15);
-        }
-        expect(dsSwProcess.tables['struttura'].rows.length).toBe(1);
-        if (dsSwProcess.tables['struttura'].rows.length>0) {
-          expect(dsSwProcess.tables.struttura.rows[0].idstruttura).toBe(1);
-        }
-        done();
-      })
-      .fail(function (err) {
-        expect(true).toBeUndefined();
-        done();
-      })
-  });
+    it('fillDataSetByKey should fill child table (different parent tables)', function (done) {
+        var dsSell = dataSetProvider('sell', 'default');
+        /*
+            SELL row:
+            idseller	idcustomer	idcoseller	idcoseller2	idlist	price	place	    idsell	    date
+            6	        6	        10	        11	        2	    200.00	place_5-2	5	        NULL
 
-  it('fillDataSetByFilter should fill give same results as fillDataSetByKey when filter is key filter', function (done) {
-    var dsSwProcess = dataSetProvider('swprocess', 'default'),
-      dsSwProcess2 = dataSetProvider('swprocess', 'default');
+            SELLER rows:
+            idseller	idsellerkind	name	age	birth	                surname	        stamp	                random	curr	cf
+            6	        1	            name6	16	2010-09-24 12:27:38.030	surname_100012	2015-10-10 21:18:13.200	452	    8420.01	77239.3
+            10	        2	            name10	20	2010-09-24 12:27:38.030	surname_100020	2015-10-10 21:18:13.210	335	    7467.36	346.178
 
-    getData.fillDataSetByFilter(ctx, dsSwProcess, dsSwProcess.tables['swprocess'], dq.eq('idswprocess',5889))
-      .then(function(){
-        return getData.fillDataSetByKey(ctx, dsSwProcess2, dsSwProcess2.tables['swprocess'], '5889')
-      })
-      .done(function () {
-        expect(dsSwProcess.tables['swprocessdetail'].rows).toEqual(dsSwProcess2.tables['swprocessdetail'].rows);
-        expect(dsSwProcess.tables['operatore'].rows).toEqual(dsSwProcess2.tables['operatore'].rows);
-        expect(dsSwProcess.tables['telefonocliente'].rows).toEqual(dsSwProcess2.tables['telefonocliente'].rows);
-        expect(dsSwProcess.tables['clienteview'].rows).toEqual(dsSwProcess2.tables['clienteview'].rows);
-        expect(dsSwProcess.tables['ente'].rows).toEqual(dsSwProcess2.tables['ente'].rows);
-        expect(dsSwProcess.tables['struttura'].rows).toEqual(dsSwProcess2.tables['struttura'].rows);
-        done();
-      })
-      .fail(function (err) {
-        expect(true).toBeUndefined();
-        expect(err).toBeUndefined();
-        done();
-      })
-  });
+            SELLVIEW row:
+            idsell	place	    idseller	idsellerkind	idcustomer	idcustomerkind	seller	sellerkind	    customer	customerkind
+            5	    place_5-2	6	        1	            6	        1	            name6	seller kind n.1	name6	    custom.kind-1
+         */
 
-  it('fillDataSetByFilter should call getParentRows on every single row read', function (done) {
-    var dsSwProcess = dataSetProvider('swprocess', 'default');
-    spyOn(getData, 'getParentRows').andCallThrough();
-    getData.fillDataSetByFilter(ctx, dsSwProcess, dsSwProcess.tables['swprocess'], dq.eq('idswprocess', 5889))
-      .done(function () {
+        getData.fillDataSetByKey(ctx, dsSell, dsSell.tables['sell'], {idsell:5})
+            .done(function () {
+                expect(dsSell.tables['selleractivity'].rows.length).toBe(3);
+                expect(dsSell.tables['seller1'].rows.length).toBe(1);
+                if (dsSell.tables['seller1'].rows.length > 0) {
+                    expect(dsSell.tables.seller1.rows[0].idseller).toBe(6);
+                }
+                expect(dsSell.tables['sellsupplement'].rows.length).toBe(2);
+                if (dsSell.tables['selleractivity'].rows.length > 0) {
+                    expect(dsSell.tables.selleractivity.rows[0].idseller).toBe(6);
+                }
+                expect(dsSell.tables['sellview'].rows.length).toBe(1);
+                if (dsSell.tables['sellview'].rows.length > 0) {
+                    expect(dsSell.tables.sellview.rows[0].idsell).toBe(5);
+                    expect(dsSell.tables.sellview.rows[0].seller).toBe('name6');
+                    expect(dsSell.tables.sellview.rows[0].place).toBe('place_5-2');
+                }
+                expect(dsSell.tables['sellerkind1'].rows.length).toBe(1);
+                if (dsSell.tables['sellerkind1'].rows.length > 0) {
+                    expect(dsSell.tables.sellerkind1.rows[0].idsellerkind).toBe(1);
+                    expect(dsSell.tables.sellerkind1.rows[0].name).toBe('seller kind n.1');
+                }
+                expect(dsSell.tables['sellerkind2'].rows.length).toBe(1);
+                if (dsSell.tables['sellerkind2'].rows.length > 0) {
+                    expect(dsSell.tables.sellerkind2.rows[0].idsellerkind).toBe(2);
+                    expect(dsSell.tables.sellerkind2.rows[0].name).toBe('seller kind n.2');
+                }
+                done();
+            })
+            .fail(function (err) {
+                expect(err).toBeUndefined();
+                expect(true).toBeUndefined();
+                done();
+            })
+    });
 
-        expect(getData.getParentRows.callCount).toEqual(
-          _.reduce(dsSwProcess.tables, function (accumulator, t) {
-            accumulator += t.rows.length;
-            return accumulator
-          }, 0)
-        );
-        done();
-      })
-      .fail(function (err) {
-        expect(true).toBeUndefined();
-        expect(err).toBeUndefined();
-        done();
-      })
-  });
+    it('fillDataSetByFilter should fill give same results as fillDataSetByKey when filter is key filter', function (done) {
+        var dsSell = dataSetProvider('sell', 'default'),
+            dsSell2 = dataSetProvider('sell', 'default');
 
-  it('fillDataSetByFilter should call getAllChildRows on every not-empty table read', function (done) {
-    var dsSwProcess = dataSetProvider('swprocess', 'default');
-    spyOn(getData, 'getAllChildRows').andCallThrough();
-    getData.fillDataSetByFilter(ctx, dsSwProcess, dsSwProcess.tables['swprocess'], dq.eq('idswprocess', 5889))
-      .done(function () {
+        getData.fillDataSetByFilter(ctx, dsSell, dsSell.tables['sell'], dq.eq('idsell', 3))
+            .then(function () {
+                return getData.fillDataSetByKey(ctx, dsSell2, dsSell2.tables['sell'], {idsell:3})
+            })
+            .done(function () {
+                expect(dsSell.tables['sell'].rows).toEqual(dsSell2.tables['sell'].rows);
+                expect(dsSell.tables['sellview'].rows).toEqual(dsSell2.tables['sellview'].rows);
+                expect(dsSell.tables['seller1'].rows).toEqual(dsSell2.tables['seller1'].rows);
+                expect(dsSell.tables['seller2'].rows).toEqual(dsSell2.tables['seller2'].rows);
+                expect(dsSell.tables['selleractivity'].rows).toEqual(dsSell2.tables['selleractivity'].rows);
+                expect(dsSell.tables['sellerkind1'].rows).toEqual(dsSell2.tables['sellerkind1'].rows);
+                done();
+            })
+            .fail(function (err) {
+                expect(true).toBeUndefined();
+                expect(err).toBeUndefined();
+                done();
+            })
+    });
 
-        expect(getData.getAllChildRows.callCount).toEqual(
-          _.reduce(dsSwProcess.tables, function (accumulator, t) {
-            if (t.rows.length>0){
-              accumulator += 1;
+    it('fillDataSetByFilter should call getParentRows on every single row read', function (done) {
+        var dsSell = dataSetProvider('sell', 'default');
+        spyOn(getData, 'getParentRows').andCallThrough();
+        getData.fillDataSetByFilter(ctx, dsSell, dsSell.tables['sell'], dq.eq('idsell', 6))
+            .done(function () {
+
+                expect(getData.getParentRows.callCount).toEqual(
+                    _.reduce(dsSell.tables, function (accumulator, t) {
+                        accumulator += t.rows.length;
+                        return accumulator
+                    }, 0)
+                );
+                done();
+            })
+            .fail(function (err) {
+                expect(true).toBeUndefined();
+                expect(err).toBeUndefined();
+                done();
+            })
+    });
+
+    it('fillDataSetByFilter should call getAllChildRows on every not-empty table read', function (done) {
+        var dsSell = dataSetProvider('sell', 'default');
+        spyOn(getData, 'getAllChildRows').andCallThrough();
+        getData.fillDataSetByFilter(ctx, dsSell, dsSell.tables['sell'], dq.eq('idsell', 13))
+            .done(function () {
+
+                expect(getData.getAllChildRows.callCount).toEqual(
+                    _.reduce(dsSell.tables, function (accumulator, t) {
+                        if (t.rows.length > 0) {
+                            accumulator += 1;
+                        }
+                        return accumulator
+                    }, 0)
+                );
+                done();
+            })
+            .fail(function (err) {
+                expect(true).toBeUndefined();
+                expect(err).toBeUndefined();
+                done();
+            })
+    });
+
+
+    describe('destroy dataBase', function () {
+        var sqlConn;
+        beforeEach(function (done) {
+            dbList.setDbInfo('test', good);
+            sqlConn = dbList.getConnection('test');
+            sqlConn.open().
+                done(function () {
+                    done();
+                });
+        });
+
+        afterEach(function () {
+            dbList.delDbInfo('test');
+            if (sqlConn) {
+                sqlConn.destroy();
             }
-            return accumulator
-          }, 0)
-        );
-        done();
-      })
-      .fail(function (err) {
-        expect(true).toBeUndefined();
-        expect(err).toBeUndefined();
-        done();
-      })
-  });
+            sqlConn = null;
+            if (fs.existsSync('test/dbList.bin')) {
+                fs.unlinkSync('test/dbList.bin');
+            }
+        });
+
+        it('should run the destroy script', function (done) {
+            sqlConn.run(fs.readFileSync('test/destroy.sql').toString())
+                .done(function () {
+                    expect(true).toBeTruthy();
+                    done();
+                })
+                .fail(function (res) {
+                    expect(res).toBeUndefined();
+                    done();
+                });
+        });
+    });
+
 });
