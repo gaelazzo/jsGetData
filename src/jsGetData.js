@@ -66,37 +66,28 @@ function getFilterKey(context, tableName, keyValues) {
  * @param {Context} context
  * @param {string} tableName
  * @param {object} example
- * @param {bool}  [useLike=false]  --if true, uses 'like' for string comparisons
+ * @param {bool}  [useLike=false]  --if true, uses 'like' for any string comparisons
  * @return {sqlFun} DataRow obtained with the given filter
  */
 function getFilterByExample(context, tableName, example, useLike){
   var def =  Deferred();
-
-  context.dbDescriptor.table(tableName)
-    .then(function (tableDescr) {
-      var keyValue,
-        kField,
-        colDescriptor,
-        fields = _.keys(example),
-        testObj = {};
-      //Gets an object from example
-      if (fields.length > 0) {
-        var i;
-        for (i = 0; i < fields.length; i += 1) {
-          kField = fields[i];
-          colDescriptor = tableDescr.column(kField);
-          testObj[kField] = context.formatter.getObject(example[kField], colDescriptor.type);
-        }
+  if (useLike) {
+    def.resolve(dq.mcmpLike(example));
+  }
+  else {
+    var  fields = _.keys(example);
+    if (fields.length > 0) {
+      var i,
+          testValues = [];
+      for (i = 0; i < fields.length; i += 1) {
+        testValues[i] = example[fields[i]];
       }
-      if (useLike) {
-        def.resolve(dq.mcmpLike(testObj));
-      } else {
-        def.resolve(dq.mcmp(fields,testObj));
-      }
-    })
-    .fail(function (err) {
-      def.reject(err);
-    });
+      def.resolve(dq.mcmp(fields,testObj));
+    }
+    else {
+      def.resolve(dq.constant(true));
+    }
+  }
   return def.promise();
 }
 /**
