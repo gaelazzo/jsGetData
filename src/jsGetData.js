@@ -1,4 +1,4 @@
-/*globals promise sqlFun Environment rollBack reject Deferred promise fail resolve done progress notify securityProvider Context*/
+/*globals promise sqlFun Environment rollBack reject Deferred promise fail resolve done progress notify  Context*/
 
 var dsSpace = require('jsDataSet'),
   DataSet = dsSpace.DataSet,
