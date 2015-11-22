@@ -101,7 +101,7 @@ function getFilterByExample(context, tableName, example, useLike){
  */
 function getByFilter(ctx, ds, table, filter) {
   var def =  Deferred(), result;
-  ctx.dataAccess.selectIntoTable({table: table, columns: '*', filter: filter, environment: ctx.environment})
+  ctx.dataAccess.selectIntoTable({table: table, filter: filter, environment: ctx.environment})
     .then(function () {
       result = table.select(filter);
       if (result.length === 0) {
