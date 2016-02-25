@@ -1,3 +1,4 @@
+'use strict';
 var dsSpace = require('jsDataSet');
 var _ = require('lodash');
 
@@ -34,6 +35,11 @@ function getDataSetCustomerWithPhone() {
     return ds;
 }
 
+/**
+ *
+ * @param editType
+ * @returns {DataSet}
+ */
 function getDataSetSell(editType) {
     var ds = new DataSet('sell'),
         customer = ds.newTable('customer'),
@@ -80,6 +86,12 @@ function getDataSetSell(editType) {
     return ds;
 }
 
+/**
+ *
+ * @param {string} table
+ * @param {string} [editType]
+ * @returns {DataSet}
+ */
 function getDataSet(table, editType) {
     if (table === 'customer') {
         return getDataSetCustomer();

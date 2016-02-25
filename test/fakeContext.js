@@ -1,9 +1,10 @@
+'use strict';
 var _ = require('lodash'),
     dbList = require('jsDbList'),
     dataAccess = require('jsDataAccess'),
     envProvider = require('./fakeEnvironmentProvider'),
     getDescriptor = dbList.getDescriptor,
-    Deferred = require("JQDeferred"),
+    Deferred = require("jsDeferred"),
     async = require('async');
 
 

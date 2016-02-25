@@ -1,5 +1,5 @@
 'use strict';
-var Deferred = require('JQDeferred'),
+var Deferred = require('jsDeferred'),
     Environment = require('./fakeEnvironment');
 
 var allEnvironmentProvider={};

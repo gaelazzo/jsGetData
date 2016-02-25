@@ -1,5 +1,9 @@
 'use strict';
 /*globals describe,beforeEach,it,expect,jasmine,spyOn */
+/*jshint jasmine:true */
+//admit object[field]
+/* jshint -W069 */
+
 var getData = require('../../src/jsGetData'),
     getContext = require('../fakeContext').getContext,
     dsNameSpace = require('jsDataSet'),
@@ -85,7 +89,7 @@ describe('getData', function () {
         dsCustomer;
 
     beforeEach(function (done) {
-        dsCustomer = dataSetProvider('customer');
+        dsCustomer = dataSetProvider('customer', 'default');
         getContext('test', 'nino', 'default', '2014', new Date(2014, 1, 20, 10, 10, 10, 0))
             .done(function (res) {
                 ctx = res;
@@ -93,7 +97,7 @@ describe('getData', function () {
             })
             .fail(function () {
                 done();
-            })
+            });
     });
 
     it('should define getFilterKey', function () {
@@ -102,7 +106,7 @@ describe('getData', function () {
 
     it('getFilterKey should filter key fields (single key)', function (done) {
         //customer key  is idcustomer
-        getData.getFilterKey(ctx, 'customer', {idcustomer:1, a:1,b:2,c:3})
+        getData.getFilterKey(ctx, 'customer', {idcustomer: 1, a: 1, b: 2, c: 3})
             .done(function (filter) {
                 var arr = [{a: 1, idcustomer: 2}, {a: 3, c: 5}, {a: 4, idcustomer: 1}, {a: 5, idcustomer: 6}],
                     res = _.filter(arr, filter);
@@ -113,13 +117,13 @@ describe('getData', function () {
                 expect(err).toBeUndefined();
                 expect(true).toBeUndefined();
                 done();
-            })
+            });
     });
 
 
     it('getFilterKey should filter key fields (multi key)', function (done) {
         //customerphone key  is idcustomer idphone
-        getData.getFilterKey(ctx, 'customerphone', {idcustomer:3, idphone:2, c:3,a:4})
+        getData.getFilterKey(ctx, 'customerphone', {idcustomer: 3, idphone: 2, c: 3, a: 4})
             .done(function (filter) {
                 expect(filter.toString()).toEqual('mcmp([idcustomer,idphone],[3,2])');
                 var arr = [
@@ -139,11 +143,11 @@ describe('getData', function () {
                 expect(err).toBeUndefined();
                 expect(true).toBeUndefined();
                 done();
-            })
+            });
     });
 
     it('fillDataSetByKey should fill a dataset (single table)', function (done) {
-        getData.fillDataSetByKey(ctx, dsCustomer, dsCustomer.tables['customer'], {idcustomer:10})
+        getData.fillDataSetByKey(ctx, dsCustomer, dsCustomer.tables['customer'], {idcustomer: 10})
             .done(function () {
                 expect(dsCustomer.tables['customer'].rows.length).toBe(1);
                 expect(dsCustomer.tables['customer'].rows[0]['idcustomer']).toBe(10);
@@ -153,7 +157,7 @@ describe('getData', function () {
             .fail(function (err) {
                 expect(err).toBeUndefined();
                 done();
-            })
+            });
     });
 
     it('fillDataSetByKey should fill main table (multiple table)', function (done) {
@@ -168,7 +172,7 @@ describe('getData', function () {
             .fail(function (err) {
                 expect(err).toBeUndefined();
                 done();
-            })
+            });
     });
 
 
@@ -183,7 +187,7 @@ describe('getData', function () {
             .fail(function (err) {
                 expect(err).toBeUndefined();
                 done();
-            })
+            });
     });
 
     it('fillDataSetByKey should call getByKey)', function (done) {
@@ -197,7 +201,7 @@ describe('getData', function () {
             .fail(function (err) {
                 expect(err).toBeUndefined();
                 done();
-            })
+            });
     });
 
     it('fillDataSetByKey should call getStartingFrom)', function (done) {
@@ -211,7 +215,7 @@ describe('getData', function () {
             .fail(function (err) {
                 expect(err).toBeUndefined();
                 done();
-            })
+            });
     });
 
     it('fillDataSetByKey should call getStartingFrom with given table filled)', function (done) {
@@ -226,11 +230,11 @@ describe('getData', function () {
             .fail(function (err) {
                 expect(err).toBeUndefined();
                 done();
-            })
+            });
     });
 
     it('fillDataSetByKey should call scanTables)', function (done) {
-        var dsSell = dataSetProvider('sell','default');
+        var dsSell = dataSetProvider('sell', 'default');
         spyOn(getData, 'scanTables').andCallThrough();
         getData.fillDataSetByKey(ctx, dsSell, dsSell.tables['sell'], {idsell:20})
             .done(function () {
@@ -240,12 +244,12 @@ describe('getData', function () {
             .fail(function (err) {
                 expect(err).toBeUndefined();
                 done();
-            })
+            });
     });
 
 
     it('fillDataSetByKey should fill child table (one child table)', function (done) {
-        var dsCustomerPhone = dataSetProvider('customerphone');
+        var dsCustomerPhone = dataSetProvider('customerphone','default');
         getData.fillDataSetByKey(ctx, dsCustomerPhone, dsCustomerPhone.tables['customer'],{idcustomer:23})
             .done(function () {
                 expect(dsCustomerPhone.tables['customerphone'].rows.length).toBe(3);
@@ -257,7 +261,7 @@ describe('getData', function () {
             .fail(function (err) {
                 expect(err).toBeUndefined();
                 done();
-            })
+            });
     });
 
     it('fillDataSetByKey should fill child table (different parent tables)', function (done) {
@@ -277,7 +281,7 @@ describe('getData', function () {
             5	    place_5-2	6	        1	            6	        1	            name6	seller kind n.1	name6	    custom.kind-1
          */
 
-        getData.fillDataSetByKey(ctx, dsSell, dsSell.tables['sell'], {idsell:5})
+        getData.fillDataSetByKey(ctx, dsSell, dsSell.tables['sell'], {idsell: 5})
             .done(function () {
                 expect(dsSell.tables['selleractivity'].rows.length).toBe(3);
                 expect(dsSell.tables['seller1'].rows.length).toBe(1);
@@ -310,7 +314,7 @@ describe('getData', function () {
                 expect(err).toBeUndefined();
                 expect(true).toBeUndefined();
                 done();
-            })
+            });
     });
 
     it('fillDataSetByFilter should fill give same results as fillDataSetByKey when filter is key filter', function (done) {
@@ -319,7 +323,7 @@ describe('getData', function () {
 
         getData.fillDataSetByFilter(ctx, dsSell, dsSell.tables['sell'], dq.eq('idsell', 3))
             .then(function () {
-                return getData.fillDataSetByKey(ctx, dsSell2, dsSell2.tables['sell'], {idsell:3})
+                return getData.fillDataSetByKey(ctx, dsSell2, dsSell2.tables['sell'], {idsell:3});
             })
             .done(function () {
                 expect(dsSell.tables['sell'].rows).toEqual(dsSell2.tables['sell'].rows);
@@ -334,7 +338,7 @@ describe('getData', function () {
                 expect(true).toBeUndefined();
                 expect(err).toBeUndefined();
                 done();
-            })
+            });
     });
 
     it('fillDataSetByFilter should call getParentRows on every single row read', function (done) {
@@ -346,7 +350,7 @@ describe('getData', function () {
                 expect(getData.getParentRows.callCount).toEqual(
                     _.reduce(dsSell.tables, function (accumulator, t) {
                         accumulator += t.rows.length;
-                        return accumulator
+                        return accumulator;
                     }, 0)
                 );
                 done();
@@ -355,7 +359,7 @@ describe('getData', function () {
                 expect(true).toBeUndefined();
                 expect(err).toBeUndefined();
                 done();
-            })
+            });
     });
 
     it('fillDataSetByFilter should call getAllChildRows on every not-empty table read', function (done) {
@@ -369,7 +373,7 @@ describe('getData', function () {
                         if (t.rows.length > 0) {
                             accumulator += 1;
                         }
-                        return accumulator
+                        return accumulator;
                     }, 0)
                 );
                 done();
@@ -378,7 +382,7 @@ describe('getData', function () {
                 expect(true).toBeUndefined();
                 expect(err).toBeUndefined();
                 done();
-            })
+            });
     });
 
 
