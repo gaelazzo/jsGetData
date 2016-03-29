@@ -1,11 +1,13 @@
 'use strict';
-var _ = require('lodash'),
-    dbList = require('jsDbList'),
-    dataAccess = require('jsDataAccess'),
+var dbList = require('jsDbList'),
     envProvider = require('./fakeEnvironmentProvider'),
-    getDescriptor = dbList.getDescriptor,
-    Deferred = require("jsDeferred"),
-    async = require('async');
+    getDescriptor = dbList.getDescriptor;
+
+/**
+ *
+ * @type {Deferred}
+ */
+var    Deferred = require("jsDeferred");
 
 
 

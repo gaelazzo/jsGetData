@@ -2,3 +2,8 @@
 .idea
 doc
 build
+.ntvs_analysis.dat
+.vs/jsGetData/v14/.suo
+node_modules
+jsGetData.njsproj
+jsGetData.sln
