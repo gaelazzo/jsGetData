@@ -29,7 +29,7 @@ BEGIN
 set @i=1;
 while @i < 500 DO
 insert into customer(idcustomer,idcustomerkind,name,age,birth,surname,stamp,random,curr,cat,cat20) values(
-			 @i,  (@i/10)+1,
+			 @i,  ROUND(cast(@i as DECIMAL(10,2))/10)+1,
 			 concat('name',convert(@i,CHAR(10)) ),
 			 10+@i,
 			'2010-09-24 12:27:38',
@@ -37,8 +37,8 @@ insert into customer(idcustomer,idcustomerkind,name,age,birth,surname,stamp,rand
 			NOW(),
 			RAND()*1000,
 			RAND()*10000,
-			@i/5,
-			@i/20 +1
+			ROUND(@i/5),
+			ROUND(@i/20) +1
 		);
 set @i=@i+1;
 END WHILE;
@@ -125,7 +125,7 @@ BEGIN
 set @i=1;
 while @i < 500 DO
     insert into seller(idseller,idsellerkind,name,age,birth,surname,stamp,random,curr,cf) values(
-			 @i,  (@i/10)+1,
+			 @i,  ROUND((@i-2)/10.0)+1,
 			 concat('name',convert(@i,CHAR(10)) ),
 			 10+@i,
 			'2010-09-24 12:27:38',

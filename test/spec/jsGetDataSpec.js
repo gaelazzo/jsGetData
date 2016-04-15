@@ -418,7 +418,7 @@ describe('getData', function () {
             }
         });
 
-        it('should run the destroy script', function (done) {
+        xit('should run the destroy script', function (done) {
             sqlConn.run(fs.readFileSync(path.join('test', 'destroy.sql')).toString())
                 .done(function () {
                     expect(true).toBeTruthy();
