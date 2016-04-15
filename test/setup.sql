@@ -1,327 +1,340 @@
-SET NOCOUNT ON
-GO
+drop table IF EXISTS customer;
 
-IF EXISTS(select * from sysobjects where id = object_id(N'[dbo].[customer]') and OBJECTPROPERTY(id, N'IsUserTable') = 1)
-BEGIN
- drop table [dbo].[customer]
-END
-GO
 
-CREATE TABLE [dbo].[customer](
-	[idcustomer] [int] NOT NULL,
-	[idcustomerkind] [int] NOT NULL,
-	[name] [varchar](100) NULL,
-	[age] [int] NULL,
-	[birth] [datetime] NULL,
-	[surname] [varchar](100) NULL,
-	[stamp] [datetime] NULL,
-	random [int] NULL,
+
+CREATE TABLE customer(
+	idcustomer int NOT NULL,
+	idcustomerkind int NOT NULL,
+	name varchar(100) NULL,
+	age int NULL,
+	birth datetime NULL,
+	surname varchar(100) NULL,
+	stamp datetime NULL,
+	random int NULL,
 	curr decimal(19,2) NULL,
 	cat int null,
 	cat20 int null,
- CONSTRAINT [PK_customer] PRIMARY KEY CLUSTERED ([idcustomer] ASC ) ON [PRIMARY]
-) ON [PRIMARY]
+    PRIMARY  KEY PK_customer (idcustomer)
+);
 
 GO
-declare @i int
-set @i=1
-select RAND(100)
-while (@i<500) BEGIN
+
+
+DROP PROCEDURE if exists ctemp;
+GO
+
+
+CREATE PROCEDURE ctemp ()
+BEGIN
+set @i=1;
+while @i < 500 DO
 insert into customer(idcustomer,idcustomerkind,name,age,birth,surname,stamp,random,curr,cat,cat20) values(
-			 @i,
-			 (@i/10)+1,
-			 'name'+convert(varchar(10),@i)
-			,10+@i,
-			{ts '2010-09-24 12:27:38.030'},
-			'surname_'++convert(varchar(10),@i*2+100000),
-			getdate(),
+			 @i,  (@i/10)+1,
+			 concat('name',convert(@i,CHAR(10)) ),
+			 10+@i,
+			'2010-09-24 12:27:38',
+			concat('surname_',convert(@i*2+100000, CHAR(10))),
+			NOW(),
 			RAND()*1000,
 			RAND()*10000,
 			@i/5,
 			@i/20 +1
-		)
-set @i=@i+1
-end
+		);
+set @i=@i+1;
+END WHILE;
+END
+
+GO
+call ctemp;
 GO
 
-IF EXISTS(select * from sysobjects where id = object_id(N'[dbo].[customerphone]') and OBJECTPROPERTY(id, N'IsUserTable') = 1)
+drop table IF EXISTS customerphone;
+
+
+CREATE TABLE customerphone(
+	idcustomer int NOT NULL,
+	idphone int not null,
+	phonekind varchar(100) NULL,
+	tel varchar(40) NULL,
+    PRIMARY  KEY PK_customerphone (idcustomer,idphone)
+);
+
+GO
+
+CREATE PROCEDURE ctemp ()
 BEGIN
- drop table [dbo].[customerphone]
+set @i=1;
+while @i < 500 DO
+    set @j=1;
+    while (@j<4) DO
+    insert into customerphone(idcustomer,idphone,phonekind,tel) values(
+			 @i,  @j,
+			 concat('phonename',convert(@j,CHAR(2)) ),
+			concat('tel_',convert(@i, CHAR(10)),'000',convert(@j, CHAR(10)))
+		);
+	set @j=@j+1;
+	END WHILE;
+    set @i=@i+1;
+END WHILE;
 END
 GO
 
-CREATE TABLE [dbo].[customerphone](
-	[idcustomer] [int] NOT NULL,
-	[idphone] [int] NOT NULL,
-	[phonekind] [varchar](100) NULL,
-	tel [varchar](40) NOT NULL
- CONSTRAINT [PK_customerphone] PRIMARY KEY CLUSTERED ([idcustomer] ASC,[idphone] ASC ) ON [PRIMARY]
-) ON [PRIMARY]
-
+call ctemp;
 GO
-declare @i int
-declare @j int
-set @i=1
-select RAND(100)
-while (@i<500) BEGIN
-
-set @j=1
-while (@j<4) BEGIN
- insert into customerphone(idcustomer,idphone,phonekind,tel) values(
-			 @i,
-			 @j,
-			 'phonename'+convert(varchar(2),@j),
-			'tel_'+convert(varchar(10),@i)+'000'+convert(varchar(10),@j)
-		)
-	set @j=@j+1
-END
-set @i=@i+1
-end
+DROP PROCEDURE if exists ctemp;
 GO
 
 
-IF EXISTS(select * from sysobjects where id = object_id(N'[dbo].[seller]') and OBJECTPROPERTY(id, N'IsUserTable') = 1)
-BEGIN
- drop table [dbo].[seller]
-END
-GO
-CREATE TABLE [dbo].[seller](
-	[idseller] [int] NOT NULL,
-	[idsellerkind] [int] NOT NULL,
-	[name] [varchar](100) NULL,
-	[age] [int] NULL,
-	[birth] [datetime] NULL,
-	[surname] [varchar](100) NULL,
-	[stamp] [datetime] NULL,
-	random [int] NULL,
+
+drop table IF EXISTS seller;
+
+
+CREATE TABLE seller(
+	idseller int NOT NULL,
+	idsellerkind int NOT NULL,
+	name varchar(100) NULL,
+	age int NULL,
+	birth datetime NULL,
+	surname varchar(100) NULL,
+	stamp datetime NULL,
+	random int NULL,
 	curr decimal(19,2) NULL,
-	cf varchar(200)
- CONSTRAINT [PK_seller] PRIMARY KEY CLUSTERED ([idseller] ASC ) ON [PRIMARY]
-) ON [PRIMARY]
+	cf varchar(200),
+	PRIMARY  KEY PK_seller (idseller)
+);
+
 GO
 
-IF EXISTS(select * from sysobjects where id = object_id(N'[dbo].[selleractivity]') and OBJECTPROPERTY(id, N'IsUserTable') = 1)
+
+drop table IF EXISTS selleractivity;
+
+
+CREATE TABLE selleractivity(
+	idseller int NOT NULL,
+	idactivity int NOT NULL,
+	description  varchar(100) NULL,
+	PRIMARY  KEY PK_selleractivity (idseller,idactivity)
+);
+
+GO
+
+
+CREATE PROCEDURE ctemp ()
 BEGIN
- drop table [dbo].[selleractivity]
-END
-GO
-CREATE TABLE [dbo].[selleractivity](
-	[idseller] [int] NOT NULL,
-	[idactivity] [int] NOT NULL,
-	[description] [varchar](100) NULL
- CONSTRAINT [PK_selleractivity] PRIMARY KEY CLUSTERED ([idseller] ASC,[idactivity] ASC ) ON [PRIMARY]
-) ON [PRIMARY]
-GO
-
-
-declare @i int,
-        @j int
-set @i=1
-select RAND(1000)
-while (@i<500) BEGIN
-insert into seller (idseller,idsellerkind,name,age,birth,surname,stamp,random,curr,cf) values(
-			 @i,
-			 (@i/10)+1,
-			 'name'+convert(varchar(10),@i),
-			10+@i,
-			{ts '2010-09-24 12:27:38.030'},
-			'surname_'++convert(varchar(10),@i*2+100000),
-			getdate(),
+set @i=1;
+while @i < 500 DO
+    insert into seller(idseller,idsellerkind,name,age,birth,surname,stamp,random,curr,cf) values(
+			 @i,  (@i/10)+1,
+			 concat('name',convert(@i,CHAR(10)) ),
+			 10+@i,
+			'2010-09-24 12:27:38',
+			concat('surname',convert(@i*2+100000,CHAR(10)) ),
+			now(),
 			RAND()*1000,
-			RAND()*10000,
-			convert(varchar(20),RAND()*100000)
-		)
-set @j=1
-while (@j<4) begin
-    insert into selleractivity (idseller,idactivity,description) values (
-            @i, @j, 'activity'+convert(varchar(10),@i)+'-'+convert(varchar(10),@j)
-    )
-    set @j=@j+1
-end
-
-set @i=@i+1
-end
-
-GO
-
-
-
-IF EXISTS(select * from sysobjects where id = object_id(N'[dbo].[sellerkind]') and OBJECTPROPERTY(id, N'IsUserTable') = 1)
-BEGIN
- drop table [dbo].[sellerkind]
+            RAND()*10000,
+            convert(RAND()*100000,CHAR(20))
+		);
+    set @j=1;
+    while (@j<4) DO
+         insert into selleractivity (idseller,idactivity,description) values (
+                    @i, @j,concat('activity',convert(@i,CHAR(10)),'-',convert(@j,char(10)))
+            );
+    	set @j=@j+1;
+	END WHILE;
+    set @i=@i+1;
+END WHILE;
 END
 GO
-CREATE TABLE [dbo].[sellerkind](
-	[idsellerkind] [int] NOT NULL,
-	[name] [varchar](100) NULL,
-	rnd [int] NULL,
- CONSTRAINT [PK_sellerkind] PRIMARY KEY CLUSTERED ([idsellerkind] ASC ) ON [PRIMARY]
-) ON [PRIMARY]
+
+
+call ctemp;
+GO
+DROP PROCEDURE if exists ctemp;
 GO
 
-declare @i int
-set @i=0
-select RAND(1000)
-while (@i<50) BEGIN
+
+drop table IF EXISTS sellerkind;
+
+
+
+CREATE TABLE sellerkind(
+	idsellerkind int NOT NULL,
+	name varchar(100) NULL,
+	rnd int NULL,
+    KEY PK_sellerkind (idsellerkind)
+);
+
+
+
+CREATE PROCEDURE ctemp ()
+BEGIN
+set @i=0;
+while (@i<50) DO
 insert into sellerkind (idsellerkind,name,rnd) values(
 			 @i,
-			 'seller kind n.'+convert(varchar(10),@i),
-			RAND()*1000
-		)
-set @i=@i+1
-end
+			 concat('seller kind n.',convert(@i,char(10))),
+			 RAND()*1000
+		);
+set @i=@i+1;
+end while;
 
-GO
-
-IF EXISTS(select * from sysobjects where id = object_id(N'[dbo].[customerkind]') and OBJECTPROPERTY(id, N'IsUserTable') = 1)
-BEGIN
- drop table [dbo].[customerkind]
 END
 GO
-CREATE TABLE [dbo].[customerkind](
-	[idcustomerkind] [int] NOT NULL,
-	[name] [varchar](100) NULL,
-	rnd [int] NULL,
- CONSTRAINT [PK_customerkind] PRIMARY KEY CLUSTERED ([idcustomerkind] ASC ) ON [PRIMARY]
-) ON [PRIMARY]
+call ctemp;
+
+
+DROP PROCEDURE if exists ctemp;
+
+
 GO
 
-declare @i int
-set @i=1
-select RAND(1000)
-while (@i<=50) BEGIN
+drop table IF EXISTS customerkind;
+
+CREATE TABLE customerkind(
+	idcustomerkind int NOT NULL,
+	name varchar(100) NULL,
+	rnd int NULL,
+     KEY PK_customerkind (idcustomerkind)
+) ;
+
+GO
+
+CREATE PROCEDURE ctemp ()
+BEGIN
+set @i=0;
+while (@i<50) DO
 insert into customerkind (idcustomerkind,name,rnd) values(
 			 @i,
-			 'custom.kind-'+convert(varchar(10),@i),
+			 concat('custom.kind-',convert(@i,char(10))),
 			RAND()*1000
-		)
-set @i=@i+1
-end
+		);
+set @i=@i+1;
+end while;
+
+
+END
+
+GO
+
+call ctemp;
+
+
+DROP PROCEDURE if exists ctemp;
+
+
+
+
+DROP PROCEDURE IF EXISTS testSP2;
 
 GO
 
 
 
-if exists (select * from dbo.sysobjects where id = object_id(N'[testSP2]') and OBJECTPROPERTY(id, N'IsProcedure') = 1)
-drop procedure [testSP2]
-GO
-
- CREATE PROCEDURE testSP2
-         @esercizio int,   @meseinizio int,   @mess varchar(200),   @defparam decimal(19,2) =  2
-         AS
-         BEGIN
-         select 'aa' as colA, 'bb' as colB, 12 as colC , @esercizio as original_esercizio,
-         replace(@mess,'a','z') as newmess,   @defparam*2 as newparam
-         END
-
-GO
-if exists (select * from dbo.sysobjects where id = object_id(N'[testSP1]') and OBJECTPROPERTY(id, N'IsProcedure') = 1)
-drop procedure [testSP1]
-GO
-
-CREATE PROCEDURE [dbo].[testSP1]
-	@esercizio int,
-	@meseinizio int,
-	@mesefine int out,
-	@mess varchar(200),
-	@defparam decimal(19,2) =  2
-AS
+CREATE PROCEDURE testSP2 (IN esercizio int,   IN meseinizio int,   IN mess varchar(200),   IN defparam decimal(19,2) )
 BEGIN
-	set @mesefine= 12
-	select 'a' as colA, 'b' as colB, 12 as colC , @esercizio as original_esercizio, 
-		replace(@mess,'a','z') as newmess,
-		@defparam*2 as newparam
+         if (defparam is null) THEN set defparam=2; 		 END IF;
+         select 'aa' as colA, 'bb' as colB, 12 as colC , esercizio as original_esercizio,
+         replace(mess,'a','z') as newmess,   defparam*2 as newparam;
 END
-
 GO
 
-if exists (select * from dbo.sysobjects where id = object_id(N'[testSP3]') and OBJECTPROPERTY(id, N'IsProcedure') = 1)
-drop procedure [testSP3]
+
+
+DROP PROCEDURE if exists testSP1;
 GO
-CREATE  PROCEDURE [dbo].[testSP3]
-	@esercizio int = 0
-AS
+
+CREATE PROCEDURE testSP1( esercizio int, meseinizio int, out mesefine int ,	mess varchar(200), 	defparam decimal(19,2) )
 BEGIN
-	select top 100 * from customer
-	select top 100 * from seller
-	select top 40 * from customerkind as c2
-	select top 50 * from sellerkind as s2
+	if (defparam is null) THEN set defparam=2; 		 END IF;
+	set mesefine= 12;
+	select 'a' as colA, 'b' as colB, 12 as colC , esercizio as original_esercizio,
+		replace(mess,'a','z') as newmess,
+		defparam*2 as newparam;
 END
+GO
+
+
+DROP PROCEDURE IF EXISTS testSP3;
 
 GO
 
-IF EXISTS(select * from sysobjects where id = object_id(N'[dbo].[sell]') and OBJECTPROPERTY(id, N'IsUserTable') = 1)
+CREATE  PROCEDURE  testSP3 (esercizio int)
 BEGIN
- drop table [dbo].[sell]
+    IF (esercizio IS NULL) then set esercizio=0; end IF;
+	select * from customer limit 100;
+	select * from seller limit 100;
+	select * from customerkind as c2 limit 40;
+	select * from sellerkind as s2 limit 50;
 END
+
 GO
 
-CREATE TABLE [dbo].[sell](
-    [idsell] [int] NOT NULL,
-	[idcustomer] [int] NOT NULL,
-	[idseller] [int] NOT NULL,
-	[idcoseller] [int] NOT NULL,
-	[idcoseller2] [int] NOT NULL,
-	[idlist] [int]  NOT NULL,
-	price decimal(19,2) NULL,
-	place varchar(100) NULL,
-	date smalldatetime  NULL
- CONSTRAINT [PK_sell] PRIMARY KEY CLUSTERED ([idsell] ASC ) ON [PRIMARY]
-) ON [PRIMARY]
+
+drop table IF EXISTS sell;
+
+CREATE TABLE sell(
+	 idsell int NOT NULL,
+    	idcustomer int NOT NULL,
+    	idseller int NOT NULL,
+    	idcoseller int NOT NULL,
+    	idcoseller2 int NOT NULL,
+    	idlist int  NOT NULL,
+    	price decimal(19,2) NULL,
+    	place varchar(100) NULL,
+    	date date  NULL,
+     PRIMARY KEY PK_sell (idsell)
+) ;
+
 GO
 
-IF EXISTS(select * from sysobjects where id = object_id(N'[dbo].[sellsupplement]') and OBJECTPROPERTY(id, N'IsUserTable') = 1)
+drop table IF EXISTS sellsupplement;
+
+CREATE TABLE sellsupplement(
+	 idsell int NOT NULL,
+    	idsupplement int NOT NULL,
+    	idselleraux int NOT NULL,
+    	description varchar(100) NULL,
+    PRIMARY KEY PK_sellsupplement (idsell,idsupplement)
+);
+
+GO
+
+
+CREATE PROCEDURE ctemp ()
 BEGIN
- drop table [dbo].sellsupplement
-END
-GO
+set @i=1;
+while (@i<2000) DO
 
-CREATE TABLE [dbo].[sellsupplement](
-    [idsell] [int] NOT NULL,
-    [idsupplement] [int] NOT NULL,
-	[idselleraux] [int] NOT NULL,
-	description varchar(100) NULL
- CONSTRAINT [PK_sellsupplement] PRIMARY KEY CLUSTERED ([idsell] ASC, [idsupplement] ASC ) ON [PRIMARY]
-) ON [PRIMARY]
-GO
+    set @j=1;
+    while (@j<4) DO
 
+     insert into sell(	idsell,		idcustomer,		idseller,		idcoseller,		idcoseller2,
+                idlist,	price,		place) values(
+                        @i,			(@i % 20)+1,	(@i % 200)+1,	(@i % 200)+5,	(@i % 200)+6,
+                @j,		@j*100, concat('place_',convert(@i,char(10)),'-',convert(@j,char(10)))  );
+            insert into sellsupplement(idsell, idsupplement,idselleraux,description) values (
+                            @i, (@i*10)+1, (@i%200)+40, concat('supplement ',convert(@i,char(10)))  );
+            insert into sellsupplement(idsell, idsupplement,idselleraux,description) values (
+                            @i, (@i*10)+2, (@i%200)+40, concat('supplement bis',convert(@i,char(10))) );
+            set @j=@j+1;
+            set @i=@i+1;
+     end while;
+end while;
 
-
-declare @i int
-declare @j int
-set @i=1
-select RAND(100)
-while (@i<2000) BEGIN
-
-set @j=1
-while (@j<4) BEGIN
- insert into sell(	idsell,		idcustomer,		idseller,		idcoseller,		idcoseller2,	idlist,	price,		place) values(
-					@i,			(@i % 20)+1,	(@i % 200)+1,	(@i % 200)+5,	(@i % 200)+6,	@j,		@j*100,'place_'+convert(varchar(10),@i)+'-'+convert(varchar(10),@j)
-		)
- insert into sellsupplement(idsell, idsupplement,idselleraux,description) values (
-                @i, (@i*10)+1, (@i%200)+40, 'supplement '+convert(varchar(10),@i)
- )
-insert into sellsupplement(idsell, idsupplement,idselleraux,description) values (
-                @i, (@i*10)+2, (@i%200)+40, 'supplement bis'+convert(varchar(10),@i)
- )
-
-	set @j=@j+1
-	set @i=@i+1
 END
 
-end
 GO
+
+call ctemp;
+
+
+DROP PROCEDURE IF EXISTS ctemp;
+
 --select * from customerphone where idcustomer=23
 
-IF EXISTS(select * from sysobjects where id = object_id(N'[dbo].[customerview]') and OBJECTPROPERTY(id, N'IsView') = 1)
-DROP VIEW [dbo].customerview
-GO
-IF EXISTS(select * from sysobjects where id = object_id(N'[dbo].[sellerview]') and OBJECTPROPERTY(id, N'IsView') = 1)
-DROP VIEW [dbo].sellerview
-GO
+DROP VIEW  IF EXISTS customerview;
 
-
-CREATE   VIEW [dbo].[customerview]
+CREATE   VIEW customerview
 (
 	idcustomer,
 	idcustomerkind,
@@ -337,7 +350,9 @@ as select
 		left outer join customerkind CK on C.idcustomerkind= CK.idcustomerkind
 GO
 
-CREATE   VIEW [dbo].[sellerview]
+DROP VIEW  IF EXISTS sellerview;
+
+CREATE   VIEW sellerview
 (
 	idseller,
 	idsellerkind,
@@ -353,12 +368,10 @@ as select
 		left outer join sellerkind CK on C.idsellerkind= CK.idsellerkind
 GO
 
-IF EXISTS(select * from sysobjects where id = object_id(N'[dbo].[sellview]') and OBJECTPROPERTY(id, N'IsView') = 1)
-DROP VIEW [dbo].sellview
-GO
 
+DROP VIEW  IF EXISTS sellview;
 
-CREATE   VIEW [dbo].[sellview]
+CREATE   VIEW sellview
 (
 	idsell,
 	place,
@@ -388,4 +401,3 @@ as select
 		left outer join customer C on S.idcustomer =C.idcustomer
 		left outer join customerkind CK on C.idcustomerkind= CK.idcustomerkind
 GO
-

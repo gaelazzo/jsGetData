@@ -48,7 +48,7 @@ module.exports = function (grunt) {
           all: [],
           options: {
             coffee: false,
-            verbose: false,
+            verbose: true,
             match: '.',
             matchall: false,
             specFolders: ['./test/spec/'],

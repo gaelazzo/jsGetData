@@ -13,6 +13,7 @@ var getData = require('../../src/jsGetData'),
     Environment = require('../fakeEnvironment'),
     _ = require('lodash'),
     fs = require('fs'),
+    path   = require('path'),
     dbList = require('jsDbList');
 
 
@@ -28,9 +29,19 @@ var getData = require('../../src/jsGetData'),
  *  }
  */
 //PUT THE  FILENAME OF YOUR FILE HERE:
-var configName = 'D:/gitrepo/jsGetData/test/db.json';
+var configName = path.join('test', 'db.json');
+var dbConfig;
+if (process.env.TRAVIS){
+    dbConfig = { "server": "127.0.0.1",
+        "dbName": "test",
+        "user": "root",
+        "pwd": ""
+    };
+}
+else {
+    dbConfig = JSON.parse(fs.readFileSync(configName).toString());
+}
 
-var dbConfig = JSON.parse(fs.readFileSync(configName).toString());
 
 /**
  * setup the dbList module
@@ -47,7 +58,7 @@ var good = {
     user: dbConfig.user,
     pwd: dbConfig.pwd,
     database: dbConfig.dbName,
-    sqlModule: 'jsSqlServerDriver'
+    sqlModule: 'jsMySqlDriver'
 };
 
 
@@ -71,8 +82,8 @@ describe('setup dataBase', function () {
 
 
     it('should run the setup script', function (done) {
-        sqlConn.run(fs.readFileSync('test/setup.sql').toString())
-            .done(function () {
+        sqlConn.run(fs.readFileSync(path.join('test', 'setup.sql')).toString())
+        .done(function () {
                 expect(true).toBeTruthy();
                 done();
             })
@@ -409,7 +420,7 @@ describe('getData', function () {
         });
 
         it('should run the destroy script', function (done) {
-            sqlConn.run(fs.readFileSync('test/destroy.sql').toString())
+            sqlConn.run(fs.readFileSync(path.join('test', 'destroy.sql')).toString())
                 .done(function () {
                     expect(true).toBeTruthy();
                     done();
