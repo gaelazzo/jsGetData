@@ -8,9 +8,7 @@ var getData = require('../../src/jsGetData'),
     getContext = require('../fakeContext').getContext,
     dsNameSpace = require('jsDataSet'),
     dq = require('jsDataQuery'),
-    DataSet = dsNameSpace.DataSet,
     dataSetProvider = require('../fakeDataSetProvider'),
-    Environment = require('../fakeEnvironment'),
     _ = require('lodash'),
     fs = require('fs'),
     path   = require('path'),
@@ -117,6 +115,7 @@ describe('getData', function () {
 
     it('getFilterKey should filter key fields (single key)', function (done) {
         //customer key  is idcustomer
+
         getData.getFilterKey(ctx, 'customer', {idcustomer: 1, a: 1, b: 2, c: 3})
             .done(function (filter) {
                 var arr = [{a: 1, idcustomer: 2}, {a: 3, c: 5}, {a: 4, idcustomer: 1}, {a: 5, idcustomer: 6}],

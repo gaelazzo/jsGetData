@@ -60,6 +60,7 @@ CREATE TABLE customerphone(
 );
 
 GO
+DROP PROCEDURE if exists ctemp;
 
 CREATE PROCEDURE ctemp ()
 BEGIN
@@ -330,7 +331,7 @@ call ctemp;
 
 DROP PROCEDURE IF EXISTS ctemp;
 
---select * from customerphone where idcustomer=23
+
 
 DROP VIEW  IF EXISTS customerview;
 

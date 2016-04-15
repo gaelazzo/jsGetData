@@ -14,7 +14,7 @@ var dsSpace = require('jsDataSet'),
  *
  * @type {Deferred}
  */
-var    Deferred = require("jsDeferred");
+var    Deferred = require("JQDeferred");
 
 /**
  * Utility class with methods to fill a DataSet starting from a set of rows
@@ -49,7 +49,6 @@ GetDataSpace.prototype = {
  */
 function getFilterKey(context, tableName, keyValues) {
     var def = Deferred();
-
     context.dbDescriptor.table(tableName)
         .then(function (tableDescr) {
             var keyValue,

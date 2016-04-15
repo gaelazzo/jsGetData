@@ -1,53 +1,30 @@
-IF EXISTS(select * from sysobjects where id = object_id(N'[dbo].[customer]') and OBJECTPROPERTY(id, N'IsUserTable') = 1)
-BEGIN
- drop table [dbo].[customer]
-END
+drop table IF EXISTS customer;
 GO
-IF EXISTS(select * from sysobjects where id = object_id(N'[dbo].[seller]') and OBJECTPROPERTY(id, N'IsUserTable') = 1)
-BEGIN
- drop table [dbo].[seller]
-END
+drop table IF EXISTS seller;
 GO
-if exists (select * from dbo.sysobjects where id = object_id(N'[testSP2]') and OBJECTPROPERTY(id, N'IsProcedure') = 1)
-drop procedure [testSP2]
+DROP PROCEDURE IF EXISTS testSP1;
 GO
-if exists (select * from dbo.sysobjects where id = object_id(N'[testSP1]') and OBJECTPROPERTY(id, N'IsProcedure') = 1)
-drop procedure [testSP1]
+DROP PROCEDURE IF EXISTS testSP2;
 GO
-if exists (select * from dbo.sysobjects where id = object_id(N'[testSP3]') and OBJECTPROPERTY(id, N'IsProcedure') = 1)
-drop procedure [testSP3]
+DROP PROCEDURE IF EXISTS testSP3;
 GO
-IF EXISTS(select * from sysobjects where id = object_id(N'[dbo].[customerkind]') and OBJECTPROPERTY(id, N'IsUserTable') = 1)
-BEGIN
- drop table [dbo].[customerkind]
-END
+drop table IF EXISTS customerkind;
 GO
-IF EXISTS(select * from sysobjects where id = object_id(N'[dbo].[sellerkind]') and OBJECTPROPERTY(id, N'IsUserTable') = 1)
-BEGIN
- drop table [dbo].[sellerkind]
-END
+drop table IF EXISTS sellerkind;
 GO
-IF EXISTS(select * from sysobjects where id = object_id(N'[dbo].[selleractivity]') and OBJECTPROPERTY(id, N'IsUserTable') = 1)
-BEGIN
- drop table [dbo].[selleractivity]
-END
+DROP VIEW  IF EXISTS customerview;
 GO
-IF EXISTS(select * from sysobjects where id = object_id(N'[dbo].[sell]') and OBJECTPROPERTY(id, N'IsUserTable') = 1)
-BEGIN
- drop table [dbo].[sell]
-END
+drop table IF EXISTS sellerkind;
 GO
-IF EXISTS(select * from sysobjects where id = object_id(N'[dbo].[sellsupplement]') and OBJECTPROPERTY(id, N'IsUserTable') = 1)
-BEGIN
- drop table [dbo].sellsupplement
-END
+drop table IF EXISTS selleractivity;
 GO
-IF EXISTS(select * from sysobjects where id = object_id(N'[dbo].[customerview]') and OBJECTPROPERTY(id, N'IsView') = 1)
-DROP VIEW [dbo].customerview
+drop table IF EXISTS sell;
 GO
-IF EXISTS(select * from sysobjects where id = object_id(N'[dbo].[sellerview]') and OBJECTPROPERTY(id, N'IsView') = 1)
-DROP VIEW [dbo].sellerview
+drop table IF EXISTS sellsupplement;
 GO
-IF EXISTS(select * from sysobjects where id = object_id(N'[dbo].[sellview]') and OBJECTPROPERTY(id, N'IsView') = 1)
-DROP VIEW [dbo].sellview
+
+DROP VIEW  IF EXISTS sellerview;
+GO
+
+DROP VIEW  IF EXISTS sellview;
 GO
