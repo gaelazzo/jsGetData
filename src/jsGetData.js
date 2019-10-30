@@ -1,11 +1,8 @@
 /*globals promise sqlFun Environment rollBack reject Deferred promise fail resolve done progress notify  Context*/
 
+
 var dsSpace = require('jsDataSet'),
-    DataSet = dsSpace.DataSet,
-    DataRow = dsSpace.DataRow,
-    DataTable = dsSpace.DataTable,
     dataRowState = dsSpace.dataRowState,
-    OptimisticLocking = dsSpace.OptimisticLocking,
     _ = require('lodash'),
     dq = require('jsDataQuery'),
     multiSelect = require('jsMultiSelect');
@@ -51,12 +48,7 @@ function getFilterKey(context, tableName, keyValues) {
     var def = Deferred();
     context.dbDescriptor.table(tableName)
         .then(function (tableDescr) {
-            var keyValue,
-                kField,
-                colDescriptor,
-                key = tableDescr.getKey(),
-                testObj = {};
-            def.resolve(dq.mcmp(key, keyValues));
+            def.resolve(dq.mcmp(tableDescr.getKey(), keyValues));
         })
         .fail(function (err) {
             def.reject(err);
@@ -70,7 +62,7 @@ function getFilterKey(context, tableName, keyValues) {
  * @param {Context} context
  * @param {string} tableName
  * @param {object} example
- * @param {bool}  [useLike=false]  --if true, uses 'like' for any string comparisons
+ * @param {boolean}  [useLike=false]  --if true, uses 'like' for any string comparisons
  * @return {sqlFun} DataRow obtained with the given filter
  */
 function getFilterByExample(context, tableName, example, useLike) {
@@ -81,11 +73,6 @@ function getFilterByExample(context, tableName, example, useLike) {
     else {
         var fields = _.keys(example);
         if (fields.length > 0) {
-            var i,
-                testValues = [];
-            for (i = 0; i < fields.length; i += 1) {
-                testValues[i] = example[fields[i]];
-            }
             def.resolve(dq.mcmp(fields, example));
         }
         else {
@@ -105,7 +92,7 @@ function getFilterByExample(context, tableName, example, useLike) {
  */
 function getByFilter(ctx, ds, table, filter) {
     var def = Deferred(), result;
-    ctx.dataAccess.selectIntoTable({table: table, filter: filter, environment: ctx.environment})
+    ctx.dataAccess.selectIntoTable({ table: table, filter: filter,  environment: ctx.environment})
         .then(function () {
             result = table.select(filter);
             if (result.length === 0) {
@@ -221,7 +208,7 @@ function getStartingFrom(ctx, primaryTable) {
     ctx.dataAccess.open()
         .then(function () {
             opened = true;
-            return that.scanTables(ctx, ds, toVisit, visited)
+            return that.scanTables(ctx, ds, toVisit, visited);
         })
         .then(function () {
             def.resolve();
@@ -287,14 +274,14 @@ function scanTables(ctx, ds, toVisit, visited) {
     });
 
     //load all rows in nextVisit
-    _.forIn(toVisit, function (table, tableName) {
+    _.forIn(toVisit, function (table) {
 
         if (table.rows.length === 0) {
             return;
         }
         //get parents of table row
         _.forEach(table.rows, function (r) {
-            that.getParentRows(ds, r, nextVisit, selList)
+            that.getParentRows(ds, r, nextVisit, selList);
         });
         that.getAllChildRows(
             ds,
@@ -304,7 +291,7 @@ function scanTables(ctx, ds, toVisit, visited) {
     });
 
     if (selList.length === 0) {
-        def.resolve()
+        def.resolve();
     } else {
         ctx.dataAccess.multiSelect({
                 selectList: selList,
@@ -323,7 +310,7 @@ function scanTables(ctx, ds, toVisit, visited) {
                     })
                     .fail(function (err) {
                         def.reject(err);
-                    })
+                    });
             })
             .fail(function (err) {
                 def.reject(err);
@@ -370,7 +357,7 @@ function getParentRows(ds, row, allowed, selList) {
 
             that.getRowsByFilter(multiComp, parentTable, selList);
 
-        })
+        });
 
 }
 
@@ -401,7 +388,9 @@ function getAllChildRows(ds, parentTable, allowed, selList) {
                  * @param {ObjectRow} r
                  */
                 function (r) {
-                    if (r.getRow().state === dataRowState.added) return;
+                    if (r.getRow().state === dataRowState.added) {
+                        return;
+                    }
                     var childFilter = rel.getChildsFilter(r);
                     if (childFilter.isFalse) {
                         return;
@@ -411,8 +400,8 @@ function getAllChildRows(ds, parentTable, allowed, selList) {
                             return r[field];
                         })
                     );
-                    that.getRowsByFilter(multiComp, childTable, selList)
-                })
+                    that.getRowsByFilter(multiComp, childTable, selList);
+                });
 
         });
 }

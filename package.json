@@ -21,7 +21,7 @@
     "jsMySqlDriver": "https://github.com/gaelazzo/jsMySqlDriver",
     "jsDataAccess": "https://github.com/gaelazzo/jsDataAccess",
     "edge-sql": "https://github.com/gaelazzo/edge-sql",
-    "grunt-contrib-watch": "1.0.0",
+    "grunt-contrib-watch": "^1.1.0",
     "grunt-contrib-yuidoc": "1.0.0",
     "jasmine-core": "^2.99.1",
     "jasmine-node": "2.0.0-beta4",
