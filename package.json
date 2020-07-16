@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "JQDeferred": "^2.1.0",
-    "lodash": "4.17.15",
+    "lodash": "4.17.19",
     "async": "~1.4.0",
     "jsDataSet": "https://github.com/gaelazzo/jsDataSet",
     "jsDataQuery": "https://github.com/gaelazzo/jsDataQuery",
