@@ -391,7 +391,7 @@ function getAllChildRows(ds, parentTable, allowed, selList) {
                     if (r.getRow().state === dataRowState.added) {
                         return;
                     }
-                    var childFilter = rel.getChildsFilter(r);
+                    var childFilter = rel.getChildFilter(r);
                     if (childFilter.isFalse) {
                         return;
                     }
