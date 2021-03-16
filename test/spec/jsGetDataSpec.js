@@ -6,7 +6,6 @@
 
 var getData = require('../../src/jsGetData'),
     getContext = require('../fakeContext').getContext,
-    dsNameSpace = require('jsDataSet'),
     dq = require('jsDataQuery'),
     dataSetProvider = require('../fakeDataSetProvider'),
     _ = require('lodash'),
@@ -26,9 +25,8 @@ var getData = require('../../src/jsGetData'),
  *    "pwd": "db password"
  *  }
  */
-//PUT THE  FILENAME OF YOUR FILE HERE:
-var configName = path.join('test', 'db.json');
-var dbConfig;
+let configName = path.join('test', 'db.json');
+let dbConfig;
 if (process.env.TRAVIS){
     dbConfig = { "server": "127.0.0.1",
         "dbName": "test",
